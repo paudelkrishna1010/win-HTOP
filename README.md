@@ -12,15 +12,6 @@ Most system monitoring tools on Windows are GUI-based.
 This project explores how similar functionality can be implemented in a **command-line environment**, while learning how user-mode applications interact with the Windows operating system.
 
 The goal is **learning and correctness**, not replacing existing tools.
-
----
-
-## Current Features
-
-- Enumerates running process IDs using Win32 APIs
-- Uses caller-allocated buffers and byte-based size contracts
-- Runs as a CLI application (PowerShell / Windows Terminal)
-
 ---
 
 ## Tech Stack

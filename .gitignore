@@ -1,0 +1,57 @@
+# =========================
+# Build outputs
+# =========================
+build/
+bin/
+out/
+*.exe
+*.dll
+*.lib
+*.obj
+*.pdb
+*.ilk
+*.exp
+
+# =========================
+# Visual Studio / MSVC
+# =========================
+.vs/
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.sln
+
+# =========================
+# VS Code
+# =========================
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+# =========================
+# CMake (if you add later)
+# =========================
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# =========================
+# Logs & temporary files
+# =========================
+*.log
+*.tmp
+*.bak
+*.swp
+
+# =========================
+# OS-specific
+# =========================
+Thumbs.db
+Desktop.ini
+
+# =========================
+# PowerShell artifacts
+# =========================
+*.ps1~
