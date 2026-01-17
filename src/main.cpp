@@ -3,11 +3,16 @@
 
 int main()
 {
+
     unsigned long processIDArray[4096];
     unsigned long processCount;
     getProcessIDList(processIDArray, sizeof(processIDArray), processCount);
+
+    char *processNameArray[4096];
+    getProcessNameList(processIDArray, processCount, processNameArray);
+
     allocateConsole();
-    paintConsole(processIDArray, processCount);
+    paintConsole(processIDArray, processNameArray, processCount);
 
     return 0;
 }

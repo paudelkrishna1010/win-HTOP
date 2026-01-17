@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <cstdlib>
 #include <iostream>
 
 bool allocateConsole()
@@ -23,11 +24,20 @@ bool allocateConsole()
 
 void paintConsole(
     unsigned long processIDArray[],
+    char *processNameArray[],
     unsigned long processCount)
 {
-    std::cout << "Process ID List: " << std::endl;
+    system("cls");
+    std::cout.width(10);
+    std::cout << std::left << "PID";
+    std::cout.width(50);
+    std::cout << std::left << "Name" << std::endl;
+
     for (int i = 0; i < processCount; i++)
     {
-        std::cout << processIDArray[i] << std::endl;
+        std::cout.width(10);
+        std::cout << std::left << processIDArray[i];
+        std::cout.width(50);
+        std::cout << std::left << processNameArray[i] << std::endl;
     }
 }
