@@ -20,31 +20,51 @@ bool getProcessIDList(unsigned long *processIDArray, unsigned long arraySizeInBy
     }
 }
 
-bool getProcessNameList(unsigned long *processIDArray, unsigned long &processCount, char **processNameArray)
+bool getProcessNameList(
+    unsigned long *processIDArray,
+    unsigned long processCount,
+    char **processNameArray)
 {
-    for (int i = 0; i < processCount; i++)
+    for (unsigned long i = 0; i < processCount; i++)
     {
-        HANDLE processHandle = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, processIDArray[i]);
+        HANDLE processHandle = OpenProcess(
+            PROCESS_QUERY_LIMITED_INFORMATION,
+            FALSE,
+            processIDArray[i]);
+
+        
+        processNameArray[i] = new char[256];
+
         if (!processHandle)
         {
-            processNameArray[i] = (char *)"[restricted]";
+            strcpy(processNameArray[i], "[restricted]");
             continue;
         }
-        processNameArray[i] = new char[1024];
-        BOOL processNameFetched = GetModuleFileNameExA(processHandle, NULL, processNameArray[i], 1024);
-        if (!processNameFetched)
+
+        char fullPath[1024];
+
+        if (!GetModuleFileNameExA(
+                processHandle,
+                NULL,
+                fullPath,
+                sizeof(fullPath)))
         {
-            processNameArray[i] = (char *)"[restricted]";
+            strcpy(processNameArray[i], "[restricted]");
+            CloseHandle(processHandle);
+            continue;
         }
+
+
+        char *baseName = strrchr(fullPath, '\\');
+        if (baseName)
+            baseName++;
         else
-        {
-            std::string temp = processNameArray[i];
-            size_t pos = temp.find_last_of('\\');
-            temp = temp.substr(pos + 1);
-            processNameArray[i] = new char[temp.length() + 1];
-            strcpy(processNameArray[i], temp.c_str());
-        }
+            baseName = fullPath;
+
+        strcpy(processNameArray[i], baseName);
+
         CloseHandle(processHandle);
     }
+
     return true;
 }

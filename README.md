@@ -39,7 +39,6 @@ The goal is **learning and correctness**, not replacing existing tools.
 
 Planned improvements include:
 - CPU and memory usage per process
-- Memory leak fix
 - Sorting and filtering
 
 ---

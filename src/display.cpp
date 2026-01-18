@@ -30,11 +30,22 @@ bool mainLoop()
     setConsoleBufferActive(activeBuffer);
 
     unsigned long processIDArray[4096];
-    char *processNameArray[4096];
+    char **processNameArray = new char *[4096];
     unsigned long processCount = 0;
+
+    for (int i = 0; i < 4096; i++)
+    {
+        processNameArray[i] = nullptr;
+    }
 
     while (true)
     {
+
+        for (unsigned long i = 0; i < processCount; i++)
+        {
+            delete[] processNameArray[i];
+            processNameArray[i] = nullptr;
+        }
 
         if (GetAsyncKeyState(VK_UP) & 0x8000)
             scrollOffset--;
