@@ -1,4 +1,5 @@
-struct CHAR_INFO;
+#pragma once
+#include <wincon.h>
 
 CHAR_INFO *createFrameBuffer(short width, short height);
 

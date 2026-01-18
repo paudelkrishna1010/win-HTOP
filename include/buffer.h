@@ -1,5 +1,10 @@
-struct CHAR_INFO;
+#pragma once
+#include <wincon.h>
 
-void* createConsoleBuffer();
-bool writeFrameToConsoleBuffer(void* consoleBuffer, CHAR_INFO *data);
-bool setConsoleBufferActive(void* consoleBuffer);
+void *createConsoleBuffer();
+bool writeFrameToConsoleBuffer(
+    HANDLE consoleBuffer,
+    CHAR_INFO *data,
+    short width,
+    short height);
+bool setConsoleBufferActive(void *consoleBuffer);

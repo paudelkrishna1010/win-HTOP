@@ -8,30 +8,86 @@
 
 bool mainLoop()
 {
+    FreeConsole();
+    AllocConsole();
+
+    int scrollOffset = 0;
+    int visibleRows = 29;
+
     HANDLE buffer1 = createConsoleBuffer();
     HANDLE buffer2 = createConsoleBuffer();
 
-    unsigned long processIDArray[4096];
-    unsigned long processCount;
-    getProcessIDList(processIDArray, sizeof(processIDArray), processCount);
-
-    char *processNameArray[4096];
-    getProcessNameList(processIDArray, processCount, processNameArray);
+    HANDLE activeBuffer = buffer1;
+    HANDLE backBuffer = buffer2;
 
     CHAR_INFO *frameBuffer = createFrameBuffer(100, 30);
-    clearFrameBuffer(frameBuffer, 100, 30);
 
-    paintFrame(frameBuffer, 100, 0, 0, (char *)"PID");
-    paintFrame(frameBuffer, 100, 0, 10, (char *)"Name");
+    COORD size = {100, 30};
+    SMALL_RECT window = {0, 0, 99, 29};
 
-    for (int i = 0; i < processCount && i < 29; i++)
+    SetConsoleScreenBufferSize(activeBuffer, size);
+    SetConsoleWindowInfo(activeBuffer, TRUE, &window);
+    setConsoleBufferActive(activeBuffer);
+
+    
+    while (true)
     {
-        char processIdInString[16];
-        sprintf(processIdInString, "%lu", processIDArray[i]);
+     
+        if (GetAsyncKeyState(VK_UP) & 0x8000)
+            scrollOffset--;
+        if (GetAsyncKeyState(VK_DOWN) & 0x8000)
+            scrollOffset++;
+        if (GetAsyncKeyState('Q') & 0x8000)
+            break;
 
-        paintFrame(frameBuffer, 100, i + 1, 0, processIdInString);
-        paintFrame(frameBuffer, 100, i + 1, 10, processNameArray[i]);
+        unsigned long processIDArray[4096];
+        unsigned long processCount;
+        getProcessIDList(processIDArray, sizeof(processIDArray), processCount);
+
+        char *processNameArray[4096];
+        getProcessNameList(processIDArray, processCount, processNameArray);
+
+
+        if (scrollOffset < 0)
+            scrollOffset = 0;
+        if (scrollOffset > (int)processCount - visibleRows)
+            scrollOffset = processCount - visibleRows;
+        if (scrollOffset < 0)
+            scrollOffset = 0;
+
+
+        clearFrameBuffer(frameBuffer, 100, 30);
+
+        paintFrame(frameBuffer, 100, 0, 0, (char *)"PID");
+        paintFrame(frameBuffer, 100, 0, 10, (char *)"Name");
+
+        for (int row = 0; row < visibleRows; row++)
+        {
+            int idx = row + scrollOffset;
+            if (idx >= processCount)
+                break;
+
+            char pidStr[16];
+            sprintf(pidStr, "%lu", processIDArray[idx]);
+
+            paintFrame(frameBuffer, 100, row + 1, 0, pidStr);
+            paintFrame(frameBuffer, 100, row + 1, 10, processNameArray[idx]);
+        }
+
+
+        writeFrameToConsoleBuffer(backBuffer, frameBuffer, 100, 30);
+
+        // swap buffers
+        setConsoleBufferActive(backBuffer);
+
+        HANDLE tmp = activeBuffer;
+        activeBuffer = backBuffer;
+        backBuffer = tmp;
+
+        Sleep(50);
     }
+
+    return true;
 }
 
 bool allocateConsole()
