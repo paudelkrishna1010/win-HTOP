@@ -1,5 +1,5 @@
-#include "process.h"
-#include "display.h"
+#include <process.h>
+#include <display.h>
 
 int main()
 {
@@ -11,6 +11,7 @@ int main()
     char *processNameArray[4096];
     getProcessNameList(processIDArray, processCount, processNameArray);
 
+    
     allocateConsole();
     paintConsole(processIDArray, processNameArray, processCount);
 
