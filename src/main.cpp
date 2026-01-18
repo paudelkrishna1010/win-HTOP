@@ -11,7 +11,7 @@ int main()
     // char *processNameArray[4096];
     // getProcessNameList(processIDArray, processCount, processNameArray);
 
-        // allocateConsole();
+    // allocateConsole();
     // paintConsole(processIDArray, processNameArray, processCount);
 
     mainLoop();

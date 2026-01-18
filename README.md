@@ -38,9 +38,8 @@ The goal is **learning and correctness**, not replacing existing tools.
 🚧 **Work in progress**
 
 Planned improvements include:
-- Mapping process IDs to process names
 - CPU and memory usage per process
-- Periodic refresh (htop-like behavior)
+- Memory leak fix
 - Sorting and filtering
 
 ---

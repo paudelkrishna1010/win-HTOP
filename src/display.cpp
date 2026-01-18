@@ -29,24 +29,28 @@ bool mainLoop()
     SetConsoleWindowInfo(activeBuffer, TRUE, &window);
     setConsoleBufferActive(activeBuffer);
 
-    
+    unsigned long processIDArray[4096];
+    char *processNameArray[4096];
+    unsigned long processCount = 0;
+
     while (true)
     {
-     
+
         if (GetAsyncKeyState(VK_UP) & 0x8000)
             scrollOffset--;
         if (GetAsyncKeyState(VK_DOWN) & 0x8000)
             scrollOffset++;
         if (GetAsyncKeyState('Q') & 0x8000)
+        {
+            delete[] frameBuffer;
+            CloseHandle(buffer1);
+            CloseHandle(buffer2);
             break;
+        }
 
-        unsigned long processIDArray[4096];
-        unsigned long processCount;
         getProcessIDList(processIDArray, sizeof(processIDArray), processCount);
 
-        char *processNameArray[4096];
         getProcessNameList(processIDArray, processCount, processNameArray);
-
 
         if (scrollOffset < 0)
             scrollOffset = 0;
@@ -54,7 +58,6 @@ bool mainLoop()
             scrollOffset = processCount - visibleRows;
         if (scrollOffset < 0)
             scrollOffset = 0;
-
 
         clearFrameBuffer(frameBuffer, 100, 30);
 
@@ -73,7 +76,6 @@ bool mainLoop()
             paintFrame(frameBuffer, 100, row + 1, 0, pidStr);
             paintFrame(frameBuffer, 100, row + 1, 10, processNameArray[idx]);
         }
-
 
         writeFrameToConsoleBuffer(backBuffer, frameBuffer, 100, 30);
 
