@@ -38,7 +38,7 @@ The goal is **learning and correctness**, not replacing existing tools.
 🚧 **Work in progress**
 
 Planned improvements include:
-- CPU and memory usage per process
+- CPU usage per process
 - Sorting and filtering
 
 ---
