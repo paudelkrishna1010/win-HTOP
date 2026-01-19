@@ -5,14 +5,18 @@
 #include <buffer.h>
 #include <process.h>
 #include <render.h>
+#include <memory.h>
+#include <io.h>
 
 bool mainLoop()
 {
     FreeConsole();
     AllocConsole();
 
+    short WIDTH = 100;
+    short HEIGHT = 50;
     int scrollOffset = 0;
-    int visibleRows = 29;
+    int visibleRows = 49;
 
     HANDLE buffer1 = createConsoleBuffer();
     HANDLE buffer2 = createConsoleBuffer();
@@ -20,10 +24,10 @@ bool mainLoop()
     HANDLE activeBuffer = buffer1;
     HANDLE backBuffer = buffer2;
 
-    CHAR_INFO *frameBuffer = createFrameBuffer(100, 30);
+    CHAR_INFO *frameBuffer = createFrameBuffer(WIDTH, HEIGHT);
 
-    COORD size = {100, 30};
-    SMALL_RECT window = {0, 0, 99, 29};
+    COORD size = {WIDTH, HEIGHT};
+    SMALL_RECT window = {0, 0, WIDTH - 1, HEIGHT - 1};
 
     SetConsoleScreenBufferSize(activeBuffer, size);
     SetConsoleWindowInfo(activeBuffer, TRUE, &window);
@@ -32,6 +36,7 @@ bool mainLoop()
     unsigned long processIDArray[4096];
     char **processNameArray = new char *[4096];
     unsigned long processCount = 0;
+    PROCESS_MEMORY_COUNTERS memoryUsageArray[4096];
 
     for (int i = 0; i < 4096; i++)
     {
@@ -59,9 +64,32 @@ bool mainLoop()
             break;
         }
 
-        getProcessIDList(processIDArray, sizeof(processIDArray), processCount);
+        HANDLE handleInput = GetStdHandle(STD_INPUT_HANDLE);
+        DWORD events;
+        GetNumberOfConsoleInputEvents(handleInput, &events);
 
-        getProcessNameList(processIDArray, processCount, processNameArray);
+        if (events > 0)
+        {
+            INPUT_RECORD record;
+            DWORD read;
+
+            ReadConsoleInput(handleInput, &record, 1, &read);
+
+            if (record.EventType == MOUSE_EVENT)
+            {
+                MOUSE_EVENT_RECORD &mouse = record.Event.MouseEvent;
+
+                if (mouse.dwEventFlags == MOUSE_WHEELED)
+                {
+                    SHORT delta = HIWORD(mouse.dwButtonState);
+
+                    if (delta > 0)
+                        scrollOffset--;
+                    else
+                        scrollOffset++;
+                }
+            }
+        }
 
         if (scrollOffset < 0)
             scrollOffset = 0;
@@ -70,10 +98,18 @@ bool mainLoop()
         if (scrollOffset < 0)
             scrollOffset = 0;
 
-        clearFrameBuffer(frameBuffer, 100, 30);
+        getProcessIDList(processIDArray, sizeof(processIDArray), processCount);
+        // filterProcessArray(processIDArray, processCount);
+
+        getProcessNameList(processIDArray, processCount, processNameArray);
+
+        getProcessMemoryUsage(processIDArray, memoryUsageArray, processCount);
+
+        clearFrameBuffer(frameBuffer, WIDTH, HEIGHT);
 
         paintFrame(frameBuffer, 100, 0, 0, (char *)"PID");
         paintFrame(frameBuffer, 100, 0, 10, (char *)"Name");
+        paintFrame(frameBuffer, 100, 0, 50, (char *)"Memory");
 
         for (int row = 0; row < visibleRows; row++)
         {
@@ -84,14 +120,22 @@ bool mainLoop()
             char pidStr[16];
             sprintf(pidStr, "%lu", processIDArray[idx]);
 
-            paintFrame(frameBuffer, 100, row + 1, 0, pidStr);
-            paintFrame(frameBuffer, 100, row + 1, 10, processNameArray[idx]);
+            char memStrMB[16];
+            sprintf(memStrMB, "%lu",
+                    (unsigned long)(memoryUsageArray[idx].WorkingSetSize / (1024 * 1024)));
+
+            paintFrame(frameBuffer, WIDTH, row + 1, 0, pidStr);
+            paintFrame(frameBuffer, WIDTH, row + 1, 10, processNameArray[idx]);
+            paintFrame(frameBuffer, WIDTH, row + 1, 50, memStrMB);
+            paintFrame(frameBuffer, WIDTH, row + 1, 55, (char*)"MB");
         }
 
-        writeFrameToConsoleBuffer(backBuffer, frameBuffer, 100, 30);
+        writeFrameToConsoleBuffer(backBuffer, frameBuffer, WIDTH, HEIGHT);
 
         // swap buffers
         setConsoleBufferActive(backBuffer);
+        hideConsoleCursor(activeBuffer);
+        enableMouseInput();
 
         HANDLE tmp = activeBuffer;
         activeBuffer = backBuffer;
