@@ -12,6 +12,18 @@ Most system monitoring tools on Windows are GUI-based.
 This project explores how similar functionality can be implemented in a **command-line environment**, while learning how user-mode applications interact with the Windows operating system.
 
 The goal is **learning and correctness**, not replacing existing tools.
+
+---
+
+## Current Features
+
+- Live process list
+- PID and process name display
+- Memory usage per process (Working Set)
+- CPU usage per process (time-delta based)
+- Scrolling support (keyboard + mouse wheel)
+- Flicker-free rendering using double buffering
+
 ---
 
 ## Tech Stack
@@ -30,6 +42,7 @@ The goal is **learning and correctness**, not replacing existing tools.
 - Stack vs heap memory allocation
 - Byte-size vs element-count handling
 - Proper error handling with `GetLastError()`
+- Process time–based CPU usage calculation
 
 ---
 
@@ -38,8 +51,10 @@ The goal is **learning and correctness**, not replacing existing tools.
 🚧 **Work in progress**
 
 Planned improvements include:
-- CPU usage per process
+
 - Sorting and filtering
+- Better CPU smoothing
+- Process selection / highlighting
 
 ---
 
@@ -52,4 +67,3 @@ This project is intentionally built without a GUI to keep the focus on **system-
 ## License
 
 No license specified (educational project).
-
