@@ -1,30 +1,34 @@
 #include <windows.h>
-// #include <psapi.h>
+#include <psapi.h>
 #include <memory_usage.h>
+#include <process_info.h>
 
-bool getProcessMemoryUsage(unsigned long *processIDArray, PROCESS_MEMORY_COUNTERS  *memoryUsageArray, unsigned long processCount)
+void fetchMemoryUsage(unsigned long processCount)
 {
-    for (unsigned long i = 0; i < processCount; i++)
+    HANDLE processHandle = OpenProcess(
+        PROCESS_QUERY_LIMITED_INFORMATION,
+        FALSE,
+        processList[processCount].pid);
+
+    if (!processHandle)
     {
-        HANDLE processHandle = OpenProcess(
-            PROCESS_QUERY_LIMITED_INFORMATION,
-            FALSE,
-            processIDArray[i]);
-
-        if (!processHandle)
-        {
-            memoryUsageArray[i].WorkingSetSize = 0;
-            continue;
-        }
-
-        DWORD cb = sizeof(PROCESS_MEMORY_COUNTERS);
-
-        BOOL sucesss = GetProcessMemoryInfo(processHandle, &memoryUsageArray[i], cb);
-
-        if (!sucesss)
-            memoryUsageArray[i].WorkingSetSize = 0;
-
-        CloseHandle(processHandle);
+        processList[processCount].memoryMB = 0;
+        return;
     }
-    return true;
+
+    DWORD cb = sizeof(PROCESS_MEMORY_COUNTERS);
+    PROCESS_MEMORY_COUNTERS tempMem;
+
+    BOOL sucesss = GetProcessMemoryInfo(processHandle, &tempMem, cb);
+
+    if (sucesss)
+    {
+        processList[processCount].memoryMB = tempMem.WorkingSetSize / (1024 * 1024);
+        CloseHandle(processHandle);
+        return;
+    }
+
+    processList[processCount].memoryMB = 0;
+    CloseHandle(processHandle);
+    return;
 }

@@ -1,2 +1,3 @@
+#pragma once
 void enableMouseInput();
-void hideConsoleCursor(void* consoleBuffer);
+void hideConsoleCursor(void *consoleBuffer);

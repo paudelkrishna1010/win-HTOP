@@ -1,5 +1,4 @@
-bool allocateConsole();
-void paintConsole(unsigned long processIDArray[], char *processNameArray[], unsigned long processCount);
+#pragma once
 
+bool allocateConsole();
 bool mainLoop();
-void hideConsoleCursor();

@@ -1,4 +1,3 @@
-#include <wincon.h>
-#include <psapi.h>
+#pragma once
 
-bool getProcessMemoryUsage(unsigned long *processIDArray, PROCESS_MEMORY_COUNTERS *memoryUsageArray, unsigned long processCount);
+void fetchMemoryUsage(unsigned long processCount);

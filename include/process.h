@@ -1,7 +1,8 @@
-bool getProcessIDList(unsigned long *processIDArray, unsigned long arraySizeInBytes, unsigned long *processCount);
+#pragma once
 
-bool getProcessNameList(unsigned long *processIDArray, unsigned long processCount, char **processNameArray);
+bool getProcessIDList(unsigned long *processIDArray, unsigned long arraySizeInBytes, unsigned long *processCount);
 
 void filterProcessArray(unsigned long *processIDArray, unsigned long &processCount);
 
-void extractBaseName(char **processNameArray, int i, char *fullPath);
+void fetchProcessName(
+    unsigned long processCount);

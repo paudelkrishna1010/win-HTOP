@@ -7,4 +7,5 @@ bool writeFrameToConsoleBuffer(
     CHAR_INFO *data,
     short width,
     short height);
+    
 bool setConsoleBufferActive(void *consoleBuffer);

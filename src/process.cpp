@@ -3,6 +3,7 @@
 #include <psapi.h>
 #include <processthreadsapi.h>
 #include <string>
+#include <process_info.h>
 
 bool getProcessIDList(unsigned long *processIDArray, unsigned long arraySizeInBytes, unsigned long *processCount)
 {
@@ -16,64 +17,6 @@ bool getProcessIDList(unsigned long *processIDArray, unsigned long arraySizeInBy
     {
         return false;
     }
-}
-
-void extractBaseName(char **processNameArray, int i, char *fullPath)
-{
-    char *baseName = strrchr(fullPath, '\\');
-    if (baseName)
-        baseName++;
-    else
-        baseName = fullPath;
-    strcpy(processNameArray[i], baseName);
-}
-
-bool getProcessNameList(
-    unsigned long *processIDArray,
-    unsigned long processCount,
-    char **processNameArray)
-{
-    for (unsigned long i = 0; i < processCount; i++)
-    {
-        HANDLE processHandle = OpenProcess(
-            PROCESS_QUERY_LIMITED_INFORMATION,
-            FALSE,
-            processIDArray[i]);
-
-        processNameArray[i] = new char[256];
-
-        if (!processHandle)
-        {
-            strcpy(processNameArray[i], "[restricted]");
-            CloseHandle(processHandle);
-            continue;
-        }
-
-        char fullPath[1024];
-
-        if (!GetModuleFileNameExA(
-                processHandle,
-                NULL,
-                fullPath,
-                sizeof(fullPath)))
-        {
-            DWORD size = 1024;
-            if (QueryFullProcessImageNameA(processHandle, 0, fullPath, &size))
-            {
-                extractBaseName(processNameArray, i, fullPath);
-            }
-            else
-            {
-                processNameArray[i] = strdup("[restricted]");
-            }
-        }
-
-        extractBaseName(processNameArray, i, fullPath);
-
-        CloseHandle(processHandle);
-    }
-
-    return true;
 }
 
 void filterProcessArray(unsigned long *processIDArray, unsigned long &processCount)
@@ -111,4 +54,35 @@ void filterProcessArray(unsigned long *processIDArray, unsigned long &processCou
     }
 
     processCount = writeIndex;
+}
+
+void fetchProcessName(
+    unsigned long processCount)
+{
+    HANDLE processHandle = OpenProcess(
+        PROCESS_QUERY_LIMITED_INFORMATION,
+        FALSE,
+        processList[processCount].pid);
+
+    if (!processHandle)
+        return;
+
+    char fullPath[1024];
+
+    DWORD size = 1024;
+
+    if (GetModuleFileNameExA(processHandle, NULL, fullPath, sizeof(fullPath)) ||
+        QueryFullProcessImageNameA(processHandle, 0, fullPath, &size))
+    {
+        char *baseName = strrchr(fullPath, '\\');
+        if (baseName)
+            baseName++;
+        else
+            baseName = fullPath;
+
+        strcpy(processList[processCount].name, baseName);
+    }
+
+    CloseHandle(processHandle);
+    return;
 }

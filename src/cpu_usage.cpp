@@ -1,56 +1,7 @@
 #include <windows.h>
 #include <psapi.h>
 #include <cpu_usage.h>
-
-bool getProcessCpuTime(unsigned long *processIDArray, unsigned long processCount, FILETIME *timeUsage)
-{
-    FILETIME kernelTime;
-    FILETIME userTime;
-
-    for (unsigned long i = 0; i < processCount; i++)
-    {
-        HANDLE processHandle = OpenProcess(
-            PROCESS_QUERY_LIMITED_INFORMATION,
-            FALSE,
-            processIDArray[i]);
-
-        kernelTime.dwHighDateTime = 0;
-        kernelTime.dwLowDateTime = 0;
-        userTime.dwHighDateTime = 0;
-        userTime.dwLowDateTime = 0;
-
-        if (!processHandle)
-            continue;
-
-        FILETIME creationTime, exitTime;
-        BOOL ok = GetProcessTimes(processHandle, &creationTime, &exitTime, &kernelTime, &userTime);
-
-        if (!ok)
-        {
-            kernelTime.dwHighDateTime = 0;
-            kernelTime.dwLowDateTime = 0;
-            userTime.dwHighDateTime = 0;
-            userTime.dwLowDateTime = 0;
-        }
-
-        ULARGE_INTEGER timeUsageInt, kernelTimeInt, userTimeInt;
-
-        kernelTimeInt.HighPart = kernelTime.dwHighDateTime;
-        kernelTimeInt.LowPart = kernelTime.dwLowDateTime;
-
-        userTimeInt.HighPart = userTime.dwHighDateTime;
-        userTimeInt.LowPart = userTime.dwLowDateTime;
-
-        timeUsageInt.QuadPart = kernelTimeInt.QuadPart + userTimeInt.QuadPart;
-
-        timeUsage[i].dwHighDateTime = timeUsageInt.HighPart;
-        timeUsage[i].dwLowDateTime = timeUsageInt.LowPart;
-
-        CloseHandle(processHandle);
-    }
-
-    return true;
-}
+#include <process_info.h>
 
 void FileTimeDifference(FILETIME *TimeDiff, FILETIME *prevTime, FILETIME *currentTime)
 {
@@ -90,30 +41,97 @@ void getSystemTime(FILETIME *timeUsage)
     timeUsage->dwLowDateTime = timeUsageInt.LowPart;
 }
 
-void calcCpuUsage(FILETIME *prevTimeUsage, FILETIME *currentTimeUsage, FILETIME *prevSysTime, FILETIME *currentSysTime, double *cpuUsage, unsigned long processCount, int cpuCount)
+void FileTimeAddition(FILETIME *timeSum, FILETIME *prevTime, FILETIME *currentTime)
 {
+    ULARGE_INTEGER prevTimeInt, currentTimeInt, timeSumInt;
 
-    FILETIME processTimeDifference;
-    FILETIME sysTimeDifference;
-    FileTimeDifference(&sysTimeDifference, prevSysTime, currentSysTime);
-    ULARGE_INTEGER sysTimeDelta;
-    sysTimeDelta.HighPart = sysTimeDifference.dwHighDateTime;
-    sysTimeDelta.LowPart = sysTimeDifference.dwLowDateTime;
+    prevTimeInt.HighPart = prevTime->dwHighDateTime;
+    prevTimeInt.LowPart = prevTime->dwLowDateTime;
 
-    for (unsigned long i = 0; i < processCount; i++)
+    currentTimeInt.HighPart = currentTime->dwHighDateTime;
+    currentTimeInt.LowPart = currentTime->dwLowDateTime;
+
+    timeSumInt.QuadPart = currentTimeInt.QuadPart + prevTimeInt.QuadPart;
+    timeSum->dwHighDateTime = timeSumInt.HighPart;
+    timeSum->dwLowDateTime = timeSumInt.LowPart;
+}
+
+void fetchTimeUsage(unsigned long processCount)
+{
+    FILETIME processKernelTime, processUserTime, creationTime, exitTime;
+
+    HANDLE processHandle = OpenProcess(
+        PROCESS_QUERY_LIMITED_INFORMATION,
+        FALSE,
+        processList[processCount].pid);
+
+    if (!processHandle)
     {
-        FileTimeDifference(&processTimeDifference, &prevTimeUsage[i], &currentTimeUsage[i]);
+        processList[processCount].currCpuTime.dwHighDateTime = 0;
+        processList[processCount].currCpuTime.dwLowDateTime = 0;
+        return;
+    }
 
-        ULARGE_INTEGER processTimeDelta;
-        processTimeDelta.HighPart = processTimeDifference.dwHighDateTime;
-        processTimeDelta.LowPart = processTimeDifference.dwLowDateTime;
+    BOOL success = GetProcessTimes(processHandle, &creationTime, &exitTime, &processKernelTime, &processUserTime);
 
-        if (sysTimeDelta.QuadPart == 0)
+    if (!success)
+    {
+        processList[processCount].currCpuTime.dwHighDateTime = 0;
+        processList[processCount].currCpuTime.dwLowDateTime = 0;
+        CloseHandle(processHandle);
+        return;
+    }
+
+    FileTimeAddition(&processList[processCount].currCpuTime, &processKernelTime, &processUserTime);
+
+    CloseHandle(processHandle);
+}
+
+void fetchCpuUsage(unsigned long processCount, int cpuCount, FILETIME *prevSysTime, FILETIME *currentSysTime)
+{
+    FILETIME processTimeDelta, systemTimeDelta;
+
+    FileTimeDifference(&systemTimeDelta, prevSysTime, currentSysTime);
+
+    for (auto &p : processList)
+    {
+        bool found = false;
+        for (auto &o : oldList)
         {
-            cpuUsage[i] = 0.0;
-            continue;
+            if (p.pid == o.pid)
+            {
+                found = true;
+                p.prevCpuTime = o.currCpuTime;
+                break;
+            }
         }
 
-        cpuUsage[i] = ((double)processTimeDelta.QuadPart * 100.00) / ((double)sysTimeDelta.QuadPart * cpuCount);
+        if (!found)
+        {
+            ZeroMemory(&p.prevCpuTime, sizeof(FILETIME));
+        }
     }
+
+    FileTimeDifference(&processTimeDelta, &processList[processCount].prevCpuTime, &processList[processCount].currCpuTime);
+
+    ULARGE_INTEGER processTimeDeltaInt, systemTimeDeltaInt;
+
+    processTimeDeltaInt.HighPart = processTimeDelta.dwHighDateTime;
+    processTimeDeltaInt.LowPart = processTimeDelta.dwLowDateTime;
+
+    systemTimeDeltaInt.HighPart = systemTimeDelta.dwHighDateTime;
+    systemTimeDeltaInt.LowPart = systemTimeDelta.dwLowDateTime;
+
+    if (systemTimeDeltaInt.QuadPart == 0)
+    {
+        processList[processCount].cpuUsage = 0.0;
+        return;
+    }
+
+    double newValue =
+        ((double)processTimeDeltaInt.QuadPart * 100.00) /
+        ((double)systemTimeDeltaInt.QuadPart);
+
+    processList[processCount].cpuUsage =
+        processList[processCount].cpuUsage * 0.7 + newValue * 0.3;
 }

@@ -8,6 +8,7 @@
 #include <memory_usage.h>
 #include <io.h>
 #include <cpu_usage.h>
+#include <process_info.h>
 
 bool mainLoop()
 {
@@ -15,9 +16,9 @@ bool mainLoop()
     AllocConsole();
 
     short WIDTH = 100;
-    short HEIGHT = 50;
+    short HEIGHT = 25;
     int scrollOffset = 0;
-    int visibleRows = 49;
+    int visibleRows = HEIGHT - 1;
 
     HANDLE buffer1 = createConsoleBuffer();
     HANDLE buffer2 = createConsoleBuffer();
@@ -35,30 +36,18 @@ bool mainLoop()
     setConsoleBufferActive(activeBuffer);
 
     unsigned long processIDArray[4096];
-    char **processNameArray = new char *[4096];
     unsigned long processCount = 0;
-    PROCESS_MEMORY_COUNTERS memoryUsageArray[4096];
-    FILETIME prevTimeUsage[4096], currentTimeUsage[4096];
+
     FILETIME prevSysTime, currentSysTime;
-    double cpuUsage[4096];
     int cpuCount = GetActiveProcessorCount(ALL_PROCESSOR_GROUPS);
 
     getSystemTime(&currentSysTime);
     prevSysTime = currentSysTime;
 
-    for (int i = 0; i < 4096; i++)
-    {
-        processNameArray[i] = nullptr;
-    }
+    processList.clear();
 
     while (true)
     {
-
-        for (unsigned long i = 0; i < processCount; i++)
-        {
-            delete[] processNameArray[i];
-            processNameArray[i] = nullptr;
-        }
 
         if (GetAsyncKeyState(VK_UP) & 0x8000)
             scrollOffset--;
@@ -99,31 +88,55 @@ bool mainLoop()
             }
         }
 
-        if (scrollOffset < 0)
-            scrollOffset = 0;
-        if (scrollOffset > (int)processCount - visibleRows)
-            scrollOffset = processCount - visibleRows;
-        if (scrollOffset < 0)
-            scrollOffset = 0;
-
         getSystemTime(&currentSysTime);
+
+        ProcessInfo pInfo;
 
         getProcessIDList(processIDArray, sizeof(processIDArray), &processCount);
 
-        filterProcessArray(processIDArray, processCount);
+        // filterProcessArray(processIDArray, processCount);
 
-        getProcessNameList(processIDArray, processCount, processNameArray);
+        oldList = processList;
+        processList.clear();
 
-        getProcessMemoryUsage(processIDArray, memoryUsageArray, processCount);
-
-        getProcessCpuTime(processIDArray, processCount, currentTimeUsage);
-
-        calcCpuUsage(prevTimeUsage, currentTimeUsage, &prevSysTime, &currentSysTime, cpuUsage, processCount, cpuCount);
+        DWORD selfPid = GetCurrentProcessId();
+        bool found = false;
 
         for (unsigned long i = 0; i < processCount; i++)
         {
-            prevTimeUsage[i] = currentTimeUsage[i];
+            if (processIDArray[i] == selfPid)
+            {
+                found = true;
+                break;
+            }
         }
+
+        if (!found && processCount < 4096)
+        {
+            processIDArray[processCount++] = selfPid;
+        }
+
+        for (unsigned long i = 0; i < processCount; i++)
+        {
+            ProcessInfo p{};
+            p.pid = processIDArray[i];
+
+            processList.push_back(p);
+            strcpy(processList[processList.size() - 1].name, "[restricted]");
+            fetchProcessName(processList.size() - 1);
+            fetchMemoryUsage(processList.size() - 1);
+            fetchTimeUsage(processList.size() - 1);
+            fetchCpuUsage(processList.size() - 1, cpuCount, &prevSysTime, &currentSysTime);
+
+            processList.back().prevCpuTime = processList.back().currCpuTime;
+        }
+
+        if (scrollOffset < 0)
+            scrollOffset = 0;
+        if (scrollOffset > (int)processList.size() - visibleRows)
+            scrollOffset = processList.size() - visibleRows;
+        if (scrollOffset < 0)
+            scrollOffset = 0;
 
         prevSysTime = currentSysTime;
 
@@ -137,21 +150,21 @@ bool mainLoop()
         for (int row = 0; row < visibleRows; row++)
         {
             int idx = row + scrollOffset;
-            if (idx >= processCount)
+            if (idx >= (int)processList.size())
                 break;
 
             char pidStr[16];
-            sprintf(pidStr, "%lu", processIDArray[idx]);
+            sprintf(pidStr, "%lu", processList[idx].pid);
 
             char memStrMB[16];
             sprintf(memStrMB, "%llu",
-                    (unsigned long long)(memoryUsageArray[idx].WorkingSetSize / (1024 * 1024)));
+                    (unsigned long long)(processList[idx].memoryMB));
 
             char cpuUsageStr[16];
-            sprintf(cpuUsageStr, "%.2f", cpuUsage[idx]);
+            sprintf(cpuUsageStr, "%.2f", processList[idx].cpuUsage);
 
             paintFrame(frameBuffer, WIDTH, row + 1, 0, pidStr);
-            paintFrame(frameBuffer, WIDTH, row + 1, 10, processNameArray[idx]);
+            paintFrame(frameBuffer, WIDTH, row + 1, 10, processList[idx].name);
             paintFrame(frameBuffer, WIDTH, row + 1, 50, memStrMB);
             paintFrame(frameBuffer, WIDTH, row + 1, 55, (char *)"MB");
             paintFrame(frameBuffer, WIDTH, row + 1, 60, (char *)cpuUsageStr);
@@ -168,7 +181,7 @@ bool mainLoop()
         activeBuffer = backBuffer;
         backBuffer = tmp;
 
-        Sleep(100);
+        Sleep(50);
     }
 
     return true;
@@ -191,25 +204,5 @@ bool allocateConsole()
         {
             return false;
         }
-    }
-}
-
-void paintConsole(
-    unsigned long processIDArray[],
-    char *processNameArray[],
-    unsigned long processCount)
-{
-    system("cls");
-    std::cout.width(10);
-    std::cout << std::left << "PID";
-    std::cout.width(50);
-    std::cout << std::left << "Name" << std::endl;
-
-    for (int i = 0; i < processCount; i++)
-    {
-        std::cout.width(10);
-        std::cout << std::left << processIDArray[i];
-        std::cout.width(50);
-        std::cout << std::left << processNameArray[i] << std::endl;
     }
 }
