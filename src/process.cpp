@@ -4,10 +4,10 @@
 #include <processthreadsapi.h>
 #include <string>
 
-bool getProcessIDList(unsigned long *processIDArray, unsigned long arraySizeInBytes, unsigned long &processCount)
+bool getProcessIDList(unsigned long *processIDArray, unsigned long arraySizeInBytes, unsigned long *processCount)
 {
-    BOOL processList = EnumProcesses(processIDArray, arraySizeInBytes, &processCount);
-    processCount /= sizeof(DWORD);
+    BOOL processList = EnumProcesses(processIDArray, arraySizeInBytes, processCount);
+    *processCount /= sizeof(DWORD);
     if (processList)
     {
         return true;
@@ -76,39 +76,39 @@ bool getProcessNameList(
     return true;
 }
 
-// void filterProcessArray(unsigned long *processIDArray, unsigned long &processCount)
-// {
-//     unsigned long writeIndex = 0;
+void filterProcessArray(unsigned long *processIDArray, unsigned long &processCount)
+{
+    unsigned long writeIndex = 0;
 
-//     for (unsigned long i = 0; i < processCount; i++)
-//     {
-//         HANDLE processHandle = OpenProcess(
-//             PROCESS_QUERY_LIMITED_INFORMATION,
-//             FALSE,
-//             processIDArray[i]);
+    for (unsigned long i = 0; i < processCount; i++)
+    {
+        HANDLE processHandle = OpenProcess(
+            PROCESS_QUERY_LIMITED_INFORMATION,
+            FALSE,
+            processIDArray[i]);
 
-//         if (!processHandle)
-//         {
-//             continue;
-//         }
+        if (!processHandle)
+        {
+            continue;
+        }
 
-//         char fullPath[1024];
-//         BOOL ok = GetModuleFileNameExA(
-//             processHandle,
-//             NULL,
-//             fullPath,
-//             sizeof(fullPath));
+        char fullPath[1024];
+        BOOL ok = GetModuleFileNameExA(
+            processHandle,
+            NULL,
+            fullPath,
+            sizeof(fullPath));
 
-//         CloseHandle(processHandle);
+        CloseHandle(processHandle);
 
-//         if (!ok)
-//         {
-//             continue;
-//         }
+        if (!ok)
+        {
+            continue;
+        }
 
-//         processIDArray[writeIndex] = processIDArray[i];
-//         writeIndex++;
-//     }
+        processIDArray[writeIndex] = processIDArray[i];
+        writeIndex++;
+    }
 
-//     processCount = writeIndex;
-// }
+    processCount = writeIndex;
+}

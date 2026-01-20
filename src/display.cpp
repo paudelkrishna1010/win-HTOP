@@ -5,8 +5,9 @@
 #include <buffer.h>
 #include <process.h>
 #include <render.h>
-#include <memory.h>
+#include <memory_usage.h>
 #include <io.h>
+#include <cpu_usage.h>
 
 bool mainLoop()
 {
@@ -37,6 +38,13 @@ bool mainLoop()
     char **processNameArray = new char *[4096];
     unsigned long processCount = 0;
     PROCESS_MEMORY_COUNTERS memoryUsageArray[4096];
+    FILETIME prevTimeUsage[4096], currentTimeUsage[4096];
+    FILETIME prevSysTime, currentSysTime;
+    double cpuUsage[4096];
+    int cpuCount = GetActiveProcessorCount(ALL_PROCESSOR_GROUPS);
+
+    getSystemTime(&currentSysTime);
+    prevSysTime = currentSysTime;
 
     for (int i = 0; i < 4096; i++)
     {
@@ -98,18 +106,33 @@ bool mainLoop()
         if (scrollOffset < 0)
             scrollOffset = 0;
 
-        getProcessIDList(processIDArray, sizeof(processIDArray), processCount);
-        // filterProcessArray(processIDArray, processCount);
+        getSystemTime(&currentSysTime);
+
+        getProcessIDList(processIDArray, sizeof(processIDArray), &processCount);
+
+        filterProcessArray(processIDArray, processCount);
 
         getProcessNameList(processIDArray, processCount, processNameArray);
 
         getProcessMemoryUsage(processIDArray, memoryUsageArray, processCount);
+
+        getProcessCpuTime(processIDArray, processCount, currentTimeUsage);
+
+        calcCpuUsage(prevTimeUsage, currentTimeUsage, &prevSysTime, &currentSysTime, cpuUsage, processCount, cpuCount);
+
+        for (unsigned long i = 0; i < processCount; i++)
+        {
+            prevTimeUsage[i] = currentTimeUsage[i];
+        }
+
+        prevSysTime = currentSysTime;
 
         clearFrameBuffer(frameBuffer, WIDTH, HEIGHT);
 
         paintFrame(frameBuffer, 100, 0, 0, (char *)"PID");
         paintFrame(frameBuffer, 100, 0, 10, (char *)"Name");
         paintFrame(frameBuffer, 100, 0, 50, (char *)"Memory");
+        paintFrame(frameBuffer, 100, 0, 60, (char *)"CPU");
 
         for (int row = 0; row < visibleRows; row++)
         {
@@ -121,13 +144,17 @@ bool mainLoop()
             sprintf(pidStr, "%lu", processIDArray[idx]);
 
             char memStrMB[16];
-            sprintf(memStrMB, "%lu",
-                    (unsigned long)(memoryUsageArray[idx].WorkingSetSize / (1024 * 1024)));
+            sprintf(memStrMB, "%llu",
+                    (unsigned long long)(memoryUsageArray[idx].WorkingSetSize / (1024 * 1024)));
+
+            char cpuUsageStr[16];
+            sprintf(cpuUsageStr, "%.2f", cpuUsage[idx]);
 
             paintFrame(frameBuffer, WIDTH, row + 1, 0, pidStr);
             paintFrame(frameBuffer, WIDTH, row + 1, 10, processNameArray[idx]);
             paintFrame(frameBuffer, WIDTH, row + 1, 50, memStrMB);
-            paintFrame(frameBuffer, WIDTH, row + 1, 55, (char*)"MB");
+            paintFrame(frameBuffer, WIDTH, row + 1, 55, (char *)"MB");
+            paintFrame(frameBuffer, WIDTH, row + 1, 60, (char *)cpuUsageStr);
         }
 
         writeFrameToConsoleBuffer(backBuffer, frameBuffer, WIDTH, HEIGHT);
@@ -141,7 +168,7 @@ bool mainLoop()
         activeBuffer = backBuffer;
         backBuffer = tmp;
 
-        Sleep(50);
+        Sleep(100);
     }
 
     return true;

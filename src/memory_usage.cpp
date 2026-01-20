@@ -1,8 +1,8 @@
 #include <windows.h>
 // #include <psapi.h>
-#include <memory.h>
+#include <memory_usage.h>
 
-bool getProcessMemoryUsage(unsigned long *processIDArray, PROCESS_MEMORY_COUNTERS *memoryUsageArray, unsigned long processCount)
+bool getProcessMemoryUsage(unsigned long *processIDArray, PROCESS_MEMORY_COUNTERS  *memoryUsageArray, unsigned long processCount)
 {
     for (unsigned long i = 0; i < processCount; i++)
     {
