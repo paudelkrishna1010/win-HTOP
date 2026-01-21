@@ -46,6 +46,9 @@ bool mainLoop()
 
     processList.clear();
 
+    ULONGLONG lastCpuUpdateTime = 0;
+    bool updateCpu = false;
+
     while (true)
     {
 
@@ -88,13 +91,22 @@ bool mainLoop()
             }
         }
 
-        getSystemTime(&currentSysTime);
-
         ProcessInfo pInfo;
 
         getProcessIDList(processIDArray, sizeof(processIDArray), &processCount);
 
-        // filterProcessArray(processIDArray, processCount);
+        filterProcessArray(processIDArray, processCount);
+
+        ULONGLONG now = GetTickCount64();
+        if (now - lastCpuUpdateTime > 500)
+        {
+            updateCpu = true;
+            getSystemTime(&currentSysTime);
+        }
+        else
+        {
+            updateCpu = false;
+        }
 
         oldList = processList;
         processList.clear();
@@ -122,13 +134,43 @@ bool mainLoop()
             p.pid = processIDArray[i];
 
             processList.push_back(p);
-            strcpy(processList[processList.size() - 1].name, "[restricted]");
-            fetchProcessName(processList.size() - 1);
-            fetchMemoryUsage(processList.size() - 1);
-            fetchTimeUsage(processList.size() - 1);
-            fetchCpuUsage(processList.size() - 1, cpuCount, &prevSysTime, &currentSysTime);
+            ProcessInfo &newProc = processList.back();
+            // strcpy(processList[processList.size() - 1].name, "[restricted]");
+            // fetchProcessName(processList.size() - 1);
 
-            processList.back().prevCpuTime = processList.back().currCpuTime;
+            bool foundOld = false;
+            for (auto &oldProc : oldList)
+            {
+                if (oldProc.pid == newProc.pid)
+                {
+                    strcpy(newProc.name, oldProc.name);
+                    newProc.prevCpuTime = oldProc.prevCpuTime;
+                    newProc.cpuUsage = oldProc.cpuUsage;
+                    foundOld = true;
+                    break;
+                }
+            }
+
+            if (!foundOld)
+            {
+                strcpy(newProc.name, "[restricted]");
+                fetchProcessName(processList.size() - 1);
+
+                fetchTimeUsage(processList.size() - 1);
+                newProc.prevCpuTime = newProc.currCpuTime;
+                newProc.cpuUsage = 0.0;
+            }
+
+            fetchMemoryUsage(processList.size() - 1);
+
+            if (updateCpu)
+            {
+                fetchTimeUsage(processList.size() - 1);
+
+                fetchCpuUsage(processList.size() - 1, cpuCount, &prevSysTime, &currentSysTime);
+
+                newProc.prevCpuTime = newProc.currCpuTime;
+            }
         }
 
         if (scrollOffset < 0)
@@ -138,7 +180,12 @@ bool mainLoop()
         if (scrollOffset < 0)
             scrollOffset = 0;
 
-        prevSysTime = currentSysTime;
+        // prevSysTime = currentSysTime;
+        if (updateCpu)
+        {
+            prevSysTime = currentSysTime;
+            lastCpuUpdateTime = now;
+        }
 
         clearFrameBuffer(frameBuffer, WIDTH, HEIGHT);
 

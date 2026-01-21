@@ -93,25 +93,6 @@ void fetchCpuUsage(unsigned long processCount, int cpuCount, FILETIME *prevSysTi
 
     FileTimeDifference(&systemTimeDelta, prevSysTime, currentSysTime);
 
-    for (auto &p : processList)
-    {
-        bool found = false;
-        for (auto &o : oldList)
-        {
-            if (p.pid == o.pid)
-            {
-                found = true;
-                p.prevCpuTime = o.currCpuTime;
-                break;
-            }
-        }
-
-        if (!found)
-        {
-            ZeroMemory(&p.prevCpuTime, sizeof(FILETIME));
-        }
-    }
-
     FileTimeDifference(&processTimeDelta, &processList[processCount].prevCpuTime, &processList[processCount].currCpuTime);
 
     ULARGE_INTEGER processTimeDeltaInt, systemTimeDeltaInt;
@@ -130,8 +111,14 @@ void fetchCpuUsage(unsigned long processCount, int cpuCount, FILETIME *prevSysTi
 
     double newValue =
         ((double)processTimeDeltaInt.QuadPart * 100.00) /
-        ((double)systemTimeDeltaInt.QuadPart);
+        (((double)systemTimeDeltaInt.QuadPart));
 
-    processList[processCount].cpuUsage =
-        processList[processCount].cpuUsage * 0.7 + newValue * 0.3;
+    if (processList[processCount].cpuUsage > 0.001)
+    {
+        processList[processCount].cpuUsage = (processList[processCount].cpuUsage * 0.7) + (newValue * 0.3);
+    }
+    else
+    {
+        processList[processCount].cpuUsage = newValue;
+    }
 }
