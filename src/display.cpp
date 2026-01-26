@@ -69,6 +69,7 @@ bool mainLoop()
 
     enum SortType sortType = NAME;
     enum SortOrder sortOrder = ASCENDING;
+    bool filter = true;
 
     while (true)
     {
@@ -107,6 +108,10 @@ bool mainLoop()
         if (GetAsyncKeyState('D') & 0x8000)
         {
             sortOrder = DESCENDING;
+        }
+        if (GetAsyncKeyState('F') & 0x8000)
+        {
+            filter = !filter;
         }
 
         HANDLE handleInput = GetStdHandle(STD_INPUT_HANDLE);
@@ -188,7 +193,8 @@ bool mainLoop()
 
         getProcessIDList(processIDArray, sizeof(processIDArray), &processCount);
 
-        filterProcessArray(processIDArray, processCount);
+        if (filter)
+            filterProcessArray(processIDArray, processCount);
 
         ULONGLONG now = GetTickCount64();
         if (now - lastCpuUpdateTime > 1000)
@@ -244,7 +250,7 @@ bool mainLoop()
 
             if (!foundOld)
             {
-                strcpy(newProc.name, "[restricted]");
+                strcpy(newProc.name, "[system]");
                 fetchProcessName(processList.size() - 1);
 
                 fetchTimeUsage(processList.size() - 1);
@@ -262,7 +268,7 @@ bool mainLoop()
 
                 newProc.prevCpuTime = newProc.currCpuTime;
             }
-        }   
+        }
 
         sortProcessList(processList, sortType, sortOrder);
         // sortProcessList(oldList, sortType, sortOrder);
@@ -278,7 +284,6 @@ bool mainLoop()
         if (scrollOffset < 0)
             scrollOffset = 0;
 
-        // prevSysTime = currentSysTime;
         if (updateCpu)
         {
             prevSysTime = currentSysTime;
@@ -326,7 +331,7 @@ bool mainLoop()
         activeBuffer = backBuffer;
         backBuffer = tmp;
 
-        Sleep(100);
+        Sleep(50);
     }
 
     return true;
