@@ -9,8 +9,8 @@
 #include <io.h>
 #include <cpu_usage.h>
 #include <process_info.h>
+#include <sort.h>
 
-// Change function signature to accept a handle
 void getConsoleSize(HANDLE hActive, short *width, short *height)
 {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -67,6 +67,9 @@ bool mainLoop()
     ULONGLONG lastCpuUpdateTime = 0;
     bool updateCpu = false;
 
+    enum SortType sortType = NAME;
+    enum SortOrder sortOrder = ASCENDING;
+
     while (true)
     {
 
@@ -80,6 +83,30 @@ bool mainLoop()
             CloseHandle(buffer1);
             CloseHandle(buffer2);
             break;
+        }
+        if (GetAsyncKeyState('P') & 0x8000)
+        {
+            sortType = PID;
+        }
+        if (GetAsyncKeyState('M') & 0x8000)
+        {
+            sortType = MEMORY;
+        }
+        if (GetAsyncKeyState('C') & 0x8000)
+        {
+            sortType = CPU;
+        }
+        if (GetAsyncKeyState('N') & 0x8000)
+        {
+            sortType = NAME;
+        }
+        if (GetAsyncKeyState('A') & 0x8000)
+        {
+            sortOrder = ASCENDING;
+        }
+        if (GetAsyncKeyState('D') & 0x8000)
+        {
+            sortOrder = DESCENDING;
         }
 
         HANDLE handleInput = GetStdHandle(STD_INPUT_HANDLE);
@@ -235,7 +262,10 @@ bool mainLoop()
 
                 newProc.prevCpuTime = newProc.currCpuTime;
             }
-        }
+        }   
+
+        sortProcessList(processList, sortType, sortOrder);
+        // sortProcessList(oldList, sortType, sortOrder);
 
         if (scrollOffset < 0)
             scrollOffset = 0;
@@ -296,7 +326,7 @@ bool mainLoop()
         activeBuffer = backBuffer;
         backBuffer = tmp;
 
-        Sleep(50);
+        Sleep(100);
     }
 
     return true;
