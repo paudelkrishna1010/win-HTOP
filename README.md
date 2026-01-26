@@ -91,7 +91,6 @@ Planned improvements include:
 
 - Sorting and filtering enhancements
 - Process selection / highlighting
-- Better input handling (edge-triggered keys)
 - Search and filtering
 
 ---
