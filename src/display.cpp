@@ -70,6 +70,8 @@ bool mainLoop()
     enum SortType sortType = NAME;
     enum SortOrder sortOrder = ASCENDING;
     bool filter = true;
+    static DWORD lastKeyTime = 0;
+    DWORD nowKey = GetTickCount();
 
     while (true)
     {
@@ -85,34 +87,6 @@ bool mainLoop()
             CloseHandle(buffer2);
             break;
         }
-        if (GetAsyncKeyState('P') & 0x8000)
-        {
-            sortType = PID;
-        }
-        if (GetAsyncKeyState('M') & 0x8000)
-        {
-            sortType = MEMORY;
-        }
-        if (GetAsyncKeyState('C') & 0x8000)
-        {
-            sortType = CPU;
-        }
-        if (GetAsyncKeyState('N') & 0x8000)
-        {
-            sortType = NAME;
-        }
-        if (GetAsyncKeyState('A') & 0x8000)
-        {
-            sortOrder = ASCENDING;
-        }
-        if (GetAsyncKeyState('D') & 0x8000)
-        {
-            sortOrder = DESCENDING;
-        }
-        if (GetAsyncKeyState('F') & 0x8000)
-        {
-            filter = !filter;
-        }
 
         HANDLE handleInput = GetStdHandle(STD_INPUT_HANDLE);
         DWORD events;
@@ -125,6 +99,38 @@ bool mainLoop()
 
             ReadConsoleInput(handleInput, &record, 1, &read);
             events--;
+
+            if (record.EventType == KEY_EVENT)
+            {
+                nowKey = GetTickCount();
+
+                if (record.Event.KeyEvent.bKeyDown &&
+                    record.Event.KeyEvent.wVirtualKeyCode == 'F' &&
+                    nowKey - lastKeyTime > 200)
+                {
+                    filter = !filter;
+                    lastKeyTime = nowKey;
+                }
+
+                if (record.Event.KeyEvent.bKeyDown &&
+                    record.Event.KeyEvent.wVirtualKeyCode == 'P')
+                    sortType = PID;
+                if (record.Event.KeyEvent.bKeyDown &&
+                    record.Event.KeyEvent.wVirtualKeyCode == 'M')
+                    sortType = MEMORY;
+                if (record.Event.KeyEvent.bKeyDown &&
+                    record.Event.KeyEvent.wVirtualKeyCode == 'C')
+                    sortType = CPU;
+                if (record.Event.KeyEvent.bKeyDown &&
+                    record.Event.KeyEvent.wVirtualKeyCode == 'N')
+                    sortType = NAME;
+                if (record.Event.KeyEvent.bKeyDown &&
+                    record.Event.KeyEvent.wVirtualKeyCode == 'A')
+                    sortOrder = ASCENDING;
+                if (record.Event.KeyEvent.bKeyDown &&
+                    record.Event.KeyEvent.wVirtualKeyCode == 'D')
+                    sortOrder = DESCENDING;
+            }
 
             if (record.EventType == WINDOW_BUFFER_SIZE_EVENT)
             {
