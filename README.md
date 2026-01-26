@@ -24,6 +24,41 @@ The goal is **learning and correctness**, not replacing existing tools.
 - Scrolling support (keyboard + mouse wheel)
 - Flicker-free rendering using double buffering
 - Console resizing handling
+- Interactive sorting
+
+---
+
+## Key Bindings
+
+### Navigation
+
+| Key / Input      | Action                    |
+|-----------------|---------------------------|
+| `Up Arrow`      | Scroll up                 |
+| `Down Arrow`    | Scroll down               |
+| Mouse Wheel     | Scroll up / down          |
+
+### Sorting
+
+| Key | Sort By        |
+|-----|----------------|
+| `N` | Name           |
+| `P` | PID            |
+| `M` | Memory usage   |
+| `C` | CPU usage      |
+
+### Sort Order
+
+| Key | Order          |
+|-----|----------------|
+| `A` | Ascending      |
+| `D` | Descending     |
+
+### Exit
+
+| Key | Action         |
+|-----|----------------|
+| `Q` | Quit program  |
 
 ---
 
@@ -44,6 +79,7 @@ The goal is **learning and correctness**, not replacing existing tools.
 - Byte-size vs element-count handling
 - Proper error handling with `GetLastError()`
 - Process time–based CPU usage calculation
+- Double-buffered console rendering
 
 ---
 
@@ -53,14 +89,17 @@ The goal is **learning and correctness**, not replacing existing tools.
 
 Planned improvements include:
 
-- Sorting and filtering
+- Sorting and filtering enhancements
 - Process selection / highlighting
+- Better input handling (edge-triggered keys)
+- Search and filtering
 
 ---
 
 ## Notes
 
-This project is intentionally built without a GUI to keep the focus on **system-level logic** rather than presentation.
+This project is intentionally built without a GUI to keep the focus on  
+**system-level logic and operating system concepts** rather than presentation.
 
 ---
 
