@@ -113,22 +113,28 @@ bool mainLoop()
                 }
 
                 if (record.Event.KeyEvent.bKeyDown &&
-                    record.Event.KeyEvent.wVirtualKeyCode == 'P')
+                    record.Event.KeyEvent.wVirtualKeyCode == 'P' &&
+                    nowKey - lastKeyTime > 200)
                     sortType = PID;
                 if (record.Event.KeyEvent.bKeyDown &&
-                    record.Event.KeyEvent.wVirtualKeyCode == 'M')
+                    record.Event.KeyEvent.wVirtualKeyCode == 'M' &&
+                    nowKey - lastKeyTime > 200)
                     sortType = MEMORY;
                 if (record.Event.KeyEvent.bKeyDown &&
-                    record.Event.KeyEvent.wVirtualKeyCode == 'C')
+                    record.Event.KeyEvent.wVirtualKeyCode == 'C' &&
+                    nowKey - lastKeyTime > 200)
                     sortType = CPU;
                 if (record.Event.KeyEvent.bKeyDown &&
-                    record.Event.KeyEvent.wVirtualKeyCode == 'N')
+                    record.Event.KeyEvent.wVirtualKeyCode == 'N' &&
+                    nowKey - lastKeyTime > 200)
                     sortType = NAME;
                 if (record.Event.KeyEvent.bKeyDown &&
-                    record.Event.KeyEvent.wVirtualKeyCode == 'A')
+                    record.Event.KeyEvent.wVirtualKeyCode == 'A' &&
+                    nowKey - lastKeyTime > 200)
                     sortOrder = ASCENDING;
                 if (record.Event.KeyEvent.bKeyDown &&
-                    record.Event.KeyEvent.wVirtualKeyCode == 'D')
+                    record.Event.KeyEvent.wVirtualKeyCode == 'D' &&
+                    nowKey - lastKeyTime > 200)
                     sortOrder = DESCENDING;
             }
 
