@@ -23,6 +23,7 @@ The goal is **learning and correctness**, not replacing existing tools.
 - CPU usage per process (time-delta based)
 - Scrolling support (keyboard + mouse wheel)
 - Flicker-free rendering using double buffering
+- Console resizing handling
 
 ---
 
@@ -53,7 +54,6 @@ The goal is **learning and correctness**, not replacing existing tools.
 Planned improvements include:
 
 - Sorting and filtering
-- Better CPU smoothing
 - Process selection / highlighting
 
 ---
