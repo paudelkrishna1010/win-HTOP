@@ -21,6 +21,7 @@ The goal is **learning and correctness**, not replacing existing tools.
 - PID and process name display
 - Memory usage per process (Working Set)
 - CPU usage per process (time-delta based)
+- User and Group per process
 - Scrolling support (keyboard + mouse wheel)
 - Flicker-free rendering using double buffering
 - Console resizing handling
