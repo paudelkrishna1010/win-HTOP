@@ -9,6 +9,10 @@ struct ProcessInfo
     char name[1024];
 
     size_t memoryMB;
+    
+    char userName[1024];
+    char userGroup[1024];
+    short priority;
 
     FILETIME prevCpuTime;
     FILETIME currCpuTime;

@@ -10,6 +10,7 @@
 #include <cpu_usage.h>
 #include <process_info.h>
 #include <sort.h>
+#include <user_info.h>
 
 void getConsoleSize(HANDLE hActive, short *width, short *height)
 {
@@ -28,8 +29,8 @@ void getConsoleSize(HANDLE hActive, short *width, short *height)
 
 bool mainLoop()
 {
-    FreeConsole();
-    AllocConsole();
+   FreeConsole();
+   AllocConsole();
 
     short WIDTH = 100;
     short HEIGHT = 25;
@@ -253,6 +254,8 @@ bool mainLoop()
                 if (oldProc.pid == newProc.pid)
                 {
                     strcpy(newProc.name, oldProc.name);
+                    strcpy(newProc.userName, oldProc.userName);
+                    strcpy(newProc.userGroup, oldProc.userGroup);
                     newProc.prevCpuTime = oldProc.prevCpuTime;
                     newProc.cpuUsage = oldProc.cpuUsage;
                     foundOld = true;
@@ -264,6 +267,7 @@ bool mainLoop()
             {
                 strcpy(newProc.name, "[system]");
                 fetchProcessName(processList.size() - 1);
+                fetchUserInfo(processList.size() - 1);
 
                 fetchTimeUsage(processList.size() - 1);
                 newProc.prevCpuTime = newProc.currCpuTime;
@@ -306,8 +310,10 @@ bool mainLoop()
 
         paintFrame(frameBuffer, WIDTH, 0, 0, (char *)"PID");
         paintFrame(frameBuffer, WIDTH, 0, 10, (char *)"Name");
-        paintFrame(frameBuffer, WIDTH, 0, 50, (char *)"Memory");
-        paintFrame(frameBuffer, WIDTH, 0, 60, (char *)"CPU");
+        paintFrame(frameBuffer, WIDTH, 0, 50, (char *)"User");
+        paintFrame(frameBuffer, WIDTH, 0, 70, (char *)"Group");
+        paintFrame(frameBuffer, WIDTH, 0, 90, (char *)"Memory");
+        paintFrame(frameBuffer, WIDTH, 0, 100, (char *)"CPU");
 
         for (int row = 0; row < visibleRows; row++)
         {
@@ -327,9 +333,11 @@ bool mainLoop()
 
             paintFrame(frameBuffer, WIDTH, row + 1, 0, pidStr);
             paintFrame(frameBuffer, WIDTH, row + 1, 10, processList[idx].name);
-            paintFrame(frameBuffer, WIDTH, row + 1, 50, memStrMB);
-            paintFrame(frameBuffer, WIDTH, row + 1, 55, (char *)"MB");
-            paintFrame(frameBuffer, WIDTH, row + 1, 60, (char *)cpuUsageStr);
+            paintFrame(frameBuffer, WIDTH, row + 1, 50, processList[idx].userName);
+            paintFrame(frameBuffer, WIDTH, row + 1, 70, processList[idx].userGroup);
+            paintFrame(frameBuffer, WIDTH, row + 1, 90, memStrMB);
+            paintFrame(frameBuffer, WIDTH, row + 1, 95, (char *)"MB");
+            paintFrame(frameBuffer, WIDTH, row + 1, 100, (char *)cpuUsageStr);
         }
 
         writeFrameToConsoleBuffer(backBuffer, frameBuffer, WIDTH, HEIGHT);
