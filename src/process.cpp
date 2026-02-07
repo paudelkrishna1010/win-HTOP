@@ -86,3 +86,40 @@ void fetchProcessName(
     CloseHandle(processHandle);
     return;
 }
+
+void fetchPriority(
+    unsigned long index)
+{
+    HANDLE processHandle = OpenProcess(
+        PROCESS_QUERY_LIMITED_INFORMATION,
+        FALSE,
+        processList[index].pid);
+
+    if (!processHandle)
+    {
+        processList[index].priority = ProcessInfo::UNKNOWN;
+        return;
+    }
+
+    DWORD priority = GetPriorityClass(processHandle);
+
+    if (priority==0)
+    {
+        processList[index].priority = ProcessInfo::UNKNOWN;
+    }
+
+    if (priority==0x40)
+        processList[index].priority = ProcessInfo::IDLE;
+    else if(priority==0x4000)
+        processList[index].priority = ProcessInfo::BELOW_NORMAL;
+    else if(priority==0x20)
+        processList[index].priority = ProcessInfo::NORMAL;
+    else if(priority==0x8000)
+        processList[index].priority = ProcessInfo::ABOVE_NORMAL;
+    else if(priority==0x80)
+        processList[index].priority = ProcessInfo::HIGH;
+    else if(priority==0x100)
+        processList[index].priority = ProcessInfo::REALTIME;
+
+    CloseHandle(processHandle);
+}

@@ -12,8 +12,9 @@ struct ProcessInfo
     
     char userName[1024];
     char userGroup[1024];
-    short priority;
-
+    enum Priority { IDLE,BELOW_NORMAL, NORMAL, ABOVE_NORMAL, HIGH, REALTIME, UNKNOWN };
+    Priority priority;
+    
     FILETIME prevCpuTime;
     FILETIME currCpuTime;
     double cpuUsage;

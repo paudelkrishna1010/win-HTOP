@@ -6,3 +6,6 @@ void filterProcessArray(unsigned long *processIDArray, unsigned long &processCou
 
 void fetchProcessName(
     unsigned long processCount);
+
+void fetchPriority(
+    unsigned long index);

@@ -27,10 +27,42 @@ void getConsoleSize(HANDLE hActive, short *width, short *height)
     }
 }
 
+void priorityToString(char *priorStr, unsigned long index){
+    if (processList[index].priority == ProcessInfo::IDLE)
+    {
+        strcpy(priorStr, "Idle");
+    }
+    else if (processList[index].priority == ProcessInfo::BELOW_NORMAL)
+    {
+        strcpy(priorStr, "Below Normal");
+    }
+    else if (processList[index].priority == ProcessInfo::NORMAL)
+    {
+        strcpy(priorStr, "Normal");
+    }
+    else if (processList[index].priority == ProcessInfo::ABOVE_NORMAL)
+    {
+        strcpy(priorStr, "Above Normal");
+    }
+    else if (processList[index].priority == ProcessInfo::HIGH)
+    {
+        strcpy(priorStr, "High");
+    }
+    else if (processList[index].priority == ProcessInfo::REALTIME)
+    {
+        strcpy(priorStr, "Realtime");
+    }
+    else if (processList[index].priority == ProcessInfo::UNKNOWN)
+    {
+        strcpy(priorStr, "??");
+    }
+    
+}
+
 bool mainLoop()
 {
-   FreeConsole();
-   AllocConsole();
+    // FreeConsole();
+    // AllocConsole();
 
     short WIDTH = 100;
     short HEIGHT = 25;
@@ -275,6 +307,7 @@ bool mainLoop()
             }
 
             fetchMemoryUsage(processList.size() - 1);
+            fetchPriority(processList.size() - 1);
 
             if (updateCpu)
             {
@@ -314,6 +347,7 @@ bool mainLoop()
         paintFrame(frameBuffer, WIDTH, 0, 70, (char *)"Group");
         paintFrame(frameBuffer, WIDTH, 0, 90, (char *)"Memory");
         paintFrame(frameBuffer, WIDTH, 0, 100, (char *)"CPU");
+        paintFrame(frameBuffer, WIDTH, 0, 110, (char *)"Priority");
 
         for (int row = 0; row < visibleRows; row++)
         {
@@ -331,6 +365,9 @@ bool mainLoop()
             char cpuUsageStr[16];
             sprintf(cpuUsageStr, "%.2f", processList[idx].cpuUsage);
 
+            char priorityStr[16];
+            priorityToString(priorityStr, idx);
+
             paintFrame(frameBuffer, WIDTH, row + 1, 0, pidStr);
             paintFrame(frameBuffer, WIDTH, row + 1, 10, processList[idx].name);
             paintFrame(frameBuffer, WIDTH, row + 1, 50, processList[idx].userName);
@@ -338,6 +375,7 @@ bool mainLoop()
             paintFrame(frameBuffer, WIDTH, row + 1, 90, memStrMB);
             paintFrame(frameBuffer, WIDTH, row + 1, 95, (char *)"MB");
             paintFrame(frameBuffer, WIDTH, row + 1, 100, (char *)cpuUsageStr);
+            paintFrame(frameBuffer, WIDTH, row + 1, 110, (char *)priorityStr);
         }
 
         writeFrameToConsoleBuffer(backBuffer, frameBuffer, WIDTH, HEIGHT);
